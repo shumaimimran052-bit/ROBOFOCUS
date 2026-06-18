@@ -130,10 +130,10 @@ npm install
 Create a `.env` file in the root directory:
 
 ```env
-VITE_OPENROUTER_KEY=your_api_key_here
+VITE_GROQ_KEY=your_api_key_here
 ```
 
-You will need a free API key for the AI features. Sign up at [openrouter.ai](https://openrouter.ai) — no credit card required. The app uses free models only so there is no cost.
+You will need a free API key for the AI features. Sign up at [console.groq.com](https://console.groq.com) — no credit card required. The app uses free models only so there is no cost.
 
 ### Face Detection Models
 
