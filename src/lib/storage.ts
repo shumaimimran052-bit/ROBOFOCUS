@@ -45,7 +45,7 @@ export interface FocusStats {
 }
 
 export function computeStats(sessions: FocusSessionRecord[]): FocusStats {
-    const totals = Object.fromEntries(DISTRACTION_TYPES.map((t) => [t, 0])) as Record
+    const totals = Object.fromEntries(DISTRACTION_TYPES.map((t) => [t, 0])) as Record<DistractionType, number>;
     DistractionType,
         number
         >;
