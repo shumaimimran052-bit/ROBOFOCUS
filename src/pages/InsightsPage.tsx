@@ -169,7 +169,6 @@ export default function InsightsPage() {
     const heatmapDays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
     const heatmapColors = ['rgba(168,85,247,0.04)', 'rgba(168,85,247,0.2)', 'rgba(168,85,247,0.45)', 'rgba(168,85,247,0.7)', 'rgba(168,85,247,0.95)']
     const timelineData = buildTimeline()
-    const currentHour = new Date().getHours()
     const totalFocusToday = timelineData.reduce((a, h) => a + h.focusMinutes, 0)
     const gapHours = timelineData.filter(h => h.isPast && h.focusMinutes === 0).length
 

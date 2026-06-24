@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
     Mic, Bell, CheckCircle2, Circle, Zap, Brain,
-    TrendingUp, Clock, AlertTriangle, Trophy,
-    Sparkles, Target, X, Plus, Heart,
-    Battery, BatteryLow, Smile, Meh, Frown, MicOff
+    AlertTriangle, Trophy,
+    Sparkles, X, Plus, Heart,
+    MicOff
 } from 'lucide-react'
 import ProceduralGround from '../components/ui/ProceduralGround'
 import Sidebar from '../components/ui/Sidebar'

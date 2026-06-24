@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, FC } from "react";
+import { useEffect, useRef, FC } from "react";
 import { Renderer, Program, Mesh, Triangle, Vec3 } from "ogl";
 import { cn } from "../../lib/utils";
 
@@ -180,7 +180,7 @@ export const VoicePoweredOrb: FC<VoicePoweredOrbProps> = ({
         let rafId: number;
         let program: Program | null = null;
         let rendererInstance: Renderer | null = null;
-        let glContext: WebGLRenderingContext | WebGL2RenderingContext | null = null;
+        let glContext: any = null;
 
         try {
             rendererInstance = new Renderer({ alpha: true, premultipliedAlpha: false, antialias: true, dpr: window.devicePixelRatio || 1 });

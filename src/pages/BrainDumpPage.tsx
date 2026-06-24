@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, MicOff, Sparkles, Plus, Trash2, CheckCircle, Brain, GitBranch, X, RotateCcw } from 'lucide-react'
 import { LiquidShader } from '../components/ui/LiquidShader'

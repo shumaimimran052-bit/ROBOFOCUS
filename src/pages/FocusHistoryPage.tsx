@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
-    Trophy, AlertTriangle, Clock, Zap, RotateCcw,
-    ChevronDown, ChevronUp, Target, X, Bell, Play
+    AlertTriangle, Clock, RotateCcw,
+    ChevronDown, ChevronUp, Target, Bell, Play
 } from 'lucide-react'
 import ShaderBackground from '../components/ui/ShaderBackground'
 import Sidebar from '../components/ui/Sidebar'

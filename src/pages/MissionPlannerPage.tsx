@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import Sidebar from '../components/ui/Sidebar'
@@ -6,7 +6,7 @@ import FlowFieldBackground from '../components/ui/FlowFieldBackground'
 import {
     Rocket, Sparkles, ChevronDown, ChevronUp,
     Play, CheckCircle, Clock, Zap,
-    Plus, RotateCcw,
+    RotateCcw,
 } from 'lucide-react'
 
 const OPENROUTER_KEY = import.meta.env.VITE_OPENROUTER_KEY
