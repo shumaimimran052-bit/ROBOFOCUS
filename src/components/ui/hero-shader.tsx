@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import { MeshGradient } from "@paper-design/shaders-react"
 
 interface ShaderBackgroundProps {
@@ -10,11 +10,10 @@ interface ShaderBackgroundProps {
 
 export function ShaderBackground({ children }: ShaderBackgroundProps) {
     const containerRef = useRef<HTMLDivElement>(null)
-    const [isActive, setIsActive] = useState(false)
 
     useEffect(() => {
-        const handleMouseEnter = () => setIsActive(true)
-        const handleMouseLeave = () => setIsActive(false)
+        const handleMouseEnter = () => { }
+        const handleMouseLeave = () => { }
         const container = containerRef.current
         if (container) {
             container.addEventListener("mouseenter", handleMouseEnter)
@@ -58,14 +57,13 @@ export function ShaderBackground({ children }: ShaderBackgroundProps) {
                 className="absolute inset-0 w-full h-full"
                 colors={["#000000", "#8b5cf6", "#ffffff", "#1e1b4b", "#4c1d95"]}
                 speed={0.3}
-                backgroundColor="#000000"
+                {...({ backgroundColor: "#000000" } as any)}
             />
             <MeshGradient
                 className="absolute inset-0 w-full h-full opacity-60"
                 colors={["#000000", "#ffffff", "#8b5cf6", "#000000"]}
                 speed={0.2}
-                wireframe="true"
-                backgroundColor="transparent"
+                {...({ wireframe: "true", backgroundColor: "transparent" } as any)}
             />
             <div className="absolute inset-0 bg-black/40" />
 

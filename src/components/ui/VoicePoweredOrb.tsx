@@ -1,4 +1,4 @@
-import { useEffect, useRef, FC } from "react";
+import { useEffect, useRef, type FC } from "react";
 import { Renderer, Program, Mesh, Triangle, Vec3 } from "ogl";
 import { cn } from "../../lib/utils";
 
@@ -25,7 +25,7 @@ export const VoicePoweredOrb: FC<VoicePoweredOrbProps> = ({
     const audioContextRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
     const microphoneRef = useRef<MediaStreamAudioSourceNode | null>(null);
-    const dataArrayRef = useRef<Uint8Array | null>(null);
+    const dataArrayRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
 
     const vert = `
@@ -169,7 +169,7 @@ export const VoicePoweredOrb: FC<VoicePoweredOrbProps> = ({
             analyserRef.current.minDecibels = -90;
             analyserRef.current.maxDecibels = -10;
             microphoneRef.current.connect(analyserRef.current);
-            dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount);
+            dataArrayRef.current = new Uint8Array(analyserRef.current.frequencyBinCount) as Uint8Array<ArrayBuffer>;
             return true;
         } catch (e) { return false; }
     };
