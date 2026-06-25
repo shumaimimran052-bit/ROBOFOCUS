@@ -110,7 +110,7 @@ export default function DashboardPage() {
     })
 
     const [xp, setXp] = useState<number>(() => parseInt(localStorage.getItem('rf_xp') || '180'))
-    const [xpEvents, setXpEvents] = useState<XPEvent[]>([])
+    const [, setXpEvents] = useState<XPEvent[]>([])
     const [showXpPop, setShowXpPop] = useState(false)
     const [lastXpGain, setLastXpGain] = useState(0)
     const [streak] = useState(5)

@@ -79,7 +79,6 @@ export default function FocusHistoryPage() {
     const successCount = sessions.filter(s => s.status === 'SUCCESS').length
     const incompleteCount = sessions.filter(s => s.status === 'INCOMPLETE').length
     const totalMinutes = sessions.reduce((acc, s) => acc + Math.floor(s.duration / 60), 0)
-    const totalDistractions = sessions.reduce((acc, s) => acc + s.distractionCount, 0)
     const completionRate = sessions.length > 0 ? Math.round((successCount / sessions.length) * 100) : 0
 
     const card = {

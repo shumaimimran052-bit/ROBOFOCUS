@@ -63,7 +63,7 @@ export default function AssistantPage() {
     const [voiceMode, setVoiceMode] = useState(false)
     const [muted, setMuted] = useState(false)
     const [orbStatus, setOrbStatus] = useState('CLICK ORB TO START VOICE')
-    const [voiceDetected, setVoiceDetected] = useState(false)
+    const [, setVoiceDetected] = useState(false)
     const [error, setError] = useState('')
 
     const bottomRef = useRef<HTMLDivElement>(null)
