@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
     LayoutDashboard, Brain, MessageSquare, Timer,
-    Vault, BarChart3, Settings, ChevronRight, History, Rocket
+    Vault, BarChart3, Settings, ChevronRight, History, Rocket, Heart
 } from 'lucide-react'
-
 const navItems = [
     { icon: LayoutDashboard, label: 'DASHBOARD', path: '/dashboard' },
     { icon: Brain, label: 'BRAIN DUMP', path: '/braindump' },
     { icon: MessageSquare, label: 'AI ASSISTANT', path: '/assistant' },
+    { icon: Heart, label: 'BODY DOUBLE', path: '/bodydouble' },
     { icon: Timer, label: 'FOCUS MODE', path: '/focus' },
     { icon: History, label: 'FOCUS HISTORY', path: '/focus/history' },
     { icon: Rocket, label: 'MISSION PLANNER', path: '/mission' },
@@ -16,12 +16,10 @@ const navItems = [
     { icon: BarChart3, label: 'INSIGHTS', path: '/insights' },
     { icon: Settings, label: 'SETTINGS', path: '/settings' },
 ]
-
 const Sidebar = () => {
     const [expanded, setExpanded] = useState(false)
     const navigate = useNavigate()
     const location = useLocation()
-
     return (
         <>
             <div
@@ -51,7 +49,6 @@ const Sidebar = () => {
                         </span>
                     )}
                 </div>
-
                 <nav className="flex-1 py-3 flex flex-col gap-0.5 overflow-hidden">
                     {navItems.map(({ icon: Icon, label, path }) => {
                         const active = location.pathname === path
@@ -94,7 +91,6 @@ const Sidebar = () => {
                         )
                     })}
                 </nav>
-
                 <div className="p-3 border-t border-purple-500/10 flex justify-center">
                     <ChevronRight
                         className="w-3 h-3 transition-transform duration-300 flex-shrink-0"
@@ -109,5 +105,4 @@ const Sidebar = () => {
         </>
     )
 }
-
 export default Sidebar

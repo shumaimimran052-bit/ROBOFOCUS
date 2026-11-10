@@ -9,9 +9,9 @@ import {
 } from 'lucide-react'
 import ProceduralGround from '../components/ui/ProceduralGround'
 import Sidebar from '../components/ui/Sidebar'
-
+import QuestsCard from '../components/ui/QuestsCard'
+import { getStreakInfo, recordTaskCompleted, markActiveToday } from '../lib/robofocus'
 const OPENROUTER_KEY = import.meta.env.VITE_OPENROUTER_KEY
-
 interface Task {
     id: number
     name: string
@@ -21,21 +21,18 @@ interface Task {
     postponeCount: number
     category: string
 }
-
 interface XPEvent {
     id: string
     label: string
     xp: number
     time: string
 }
-
 interface MoodState {
     mood: 'great' | 'good' | 'tired' | 'stressed' | 'awful' | null
     energy: 'high' | 'medium' | 'low' | null
     note: string
     timestamp: string
 }
-
 const LEVELS = [
     { level: 1, name: 'ROOKIE', xpRequired: 0, color: '#a855f7' },
     { level: 2, name: 'FOCUSED', xpRequired: 100, color: '#8b5cf6' },
@@ -45,9 +42,7 @@ const LEVELS = [
     { level: 6, name: 'MACHINE', xpRequired: 2000, color: '#4c1d95' },
     { level: 7, name: 'LEGEND', xpRequired: 5000, color: '#ff3cac' },
 ]
-
 const XP_REWARDS = { taskComplete: 25, focusSession: 50, brainDump: 15, moodCheckIn: 10 }
-
 const MOOD_CONFIG = {
     great: { icon: '🚀', label: 'GREAT', color: '#00cc60', desc: 'Ready to crush it' },
     good: { icon: '😊', label: 'GOOD', color: '#00c8ff', desc: 'Feeling solid' },
@@ -55,17 +50,14 @@ const MOOD_CONFIG = {
     stressed: { icon: '😰', label: 'STRESSED', color: '#ff3cac', desc: 'Overwhelmed' },
     awful: { icon: '💀', label: 'AWFUL', color: '#ef4444', desc: 'Rough day' },
 }
-
 const ENERGY_CONFIG = {
     high: { icon: '⚡', label: 'HIGH ENERGY', color: '#00cc60' },
     medium: { icon: '🔋', label: 'MEDIUM', color: '#f59e0b' },
     low: { icon: '🪫', label: 'LOW ENERGY', color: '#ef4444' },
 }
-
 const priorityColor: Record<string, string> = {
     high: '#ff3cac', med: '#7c3aed', low: '#4f46e5',
 }
-
 const callAI = async (prompt: string): Promise<string> => {
     if (!OPENROUTER_KEY) throw new Error('No key')
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -87,10 +79,8 @@ const callAI = async (prompt: string): Promise<string> => {
     const data = await res.json()
     return data.choices?.[0]?.message?.content?.trim() || ''
 }
-
 export default function DashboardPage() {
     const navigate = useNavigate()
-
     const [tasks, setTasks] = useState<Task[]>(() => {
         try {
             const saved = localStorage.getItem('rf_tasks')
@@ -108,17 +98,15 @@ export default function DashboardPage() {
             { id: 9, name: 'Call mom', meta: 'TODAY', priority: 'med', done: false, postponeCount: 3, category: 'PERSONAL' },
         ]
     })
-
     const [xp, setXp] = useState<number>(() => parseInt(localStorage.getItem('rf_xp') || '180'))
     const [, setXpEvents] = useState<XPEvent[]>([])
     const [showXpPop, setShowXpPop] = useState(false)
     const [lastXpGain, setLastXpGain] = useState(0)
-    const [streak] = useState(5)
+    const streak = getStreakInfo().current
     const [time, setTime] = useState(new Date())
     const [listening, setListening] = useState(false)
     const [newTaskInput, setNewTaskInput] = useState('')
     const [showAddTask, setShowAddTask] = useState(false)
-
     // Mood state
     const [moodState, setMoodState] = useState<MoodState>(() => {
         try {
@@ -140,21 +128,17 @@ export default function DashboardPage() {
     const [loadingMoodAdvice, setLoadingMoodAdvice] = useState(false)
     const [moodListening, setMoodListening] = useState(false)
     const moodRecognitionRef = useRef<any>(null)
-
     // Procrastination
     const [procrastTasks, setProcrastTasks] = useState<Task[]>([])
     const [procrastSuggestion, setProcrastSuggestion] = useState('')
     const [loadingProcrast, setLoadingProcrast] = useState(false)
     const [showProcrastBanner, setShowProcrastBanner] = useState(false)
     const [procrastDismissed, setProcrastDismissed] = useState<number[]>([])
-
     // Overwhelm
     const [showOverwhelmMode, setShowOverwhelmMode] = useState(false)
     const [top3Tasks, setTop3Tasks] = useState<Task[]>([])
     const [overwhelmDismissed, setOverwhelmDismissed] = useState(false)
-
     const [greeting, setGreeting] = useState('')
-
     // Mood-adjusted focus suggestion
     const getMoodAdjustedSuggestion = () => {
         if (!moodState.mood) return { duration: '25 MIN', seconds: 1500, label: 'Standard session' }
@@ -167,9 +151,7 @@ export default function DashboardPage() {
         }
         return map[moodState.mood]
     }
-
     const focusSuggestion = getMoodAdjustedSuggestion()
-
     // Level
     const getCurrentLevel = (totalXp: number) => {
         let current = LEVELS[0]
@@ -185,14 +167,12 @@ export default function DashboardPage() {
     const xpProgress = nextLevel
         ? ((xp - currentLevel.xpRequired) / (nextLevel.xpRequired - currentLevel.xpRequired)) * 100
         : 100
-
     useEffect(() => { localStorage.setItem('rf_tasks', JSON.stringify(tasks)) }, [tasks])
     useEffect(() => { localStorage.setItem('rf_xp', String(xp)) }, [xp])
     useEffect(() => {
         const t = setInterval(() => setTime(new Date()), 1000)
         return () => clearInterval(t)
     }, [])
-
     useEffect(() => {
         const pending = tasks.filter(t => !t.done)
         const hour = new Date().getHours()
@@ -203,14 +183,12 @@ export default function DashboardPage() {
                 moodState.mood === 'great' ? 'Great energy today! ' : ''
         setGreeting(`${moodPrefix}Good ${tod}. You have ${pending.length} missions pending${high.length > 0 ? ` — ${high.length} high priority` : ''}. ${high[0] ? `Start with: ${high[0].name}.` : 'No urgent tasks right now.'}`)
     }, [moodState.mood])
-
     // Procrastination detector
     useEffect(() => {
         const flagged = tasks.filter(t => !t.done && t.postponeCount >= 3 && !procrastDismissed.includes(t.id))
         setProcrastTasks(flagged)
         if (flagged.length > 0) setShowProcrastBanner(true)
     }, [tasks, procrastDismissed])
-
     // Overwhelm detector
     useEffect(() => {
         const pending = tasks.filter(t => !t.done)
@@ -222,10 +200,8 @@ export default function DashboardPage() {
             setTop3Tasks(sorted.slice(0, 3))
         }
     }, [tasks, overwhelmDismissed])
-
     const pendingTasks = tasks.filter(t => !t.done)
     const showOverwhelmAlert = pendingTasks.length >= 8 && !overwhelmDismissed
-
     // XP
     const gainXP = (amount: number, label: string) => {
         setXp(prev => prev + amount)
@@ -234,28 +210,29 @@ export default function DashboardPage() {
         setTimeout(() => setShowXpPop(false), 2000)
         setXpEvents(prev => [{ id: Date.now().toString(), label, xp: amount, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }, ...prev].slice(0, 5))
     }
-
     const toggleTask = (id: number) => {
         setTasks(tasks.map(t => {
             if (t.id === id) {
-                if (!t.done) gainXP(XP_REWARDS.taskComplete, `Task: +${XP_REWARDS.taskComplete} XP`)
+                if (!t.done) {
+                    gainXP(XP_REWARDS.taskComplete, `Task: +${XP_REWARDS.taskComplete} XP`)
+                    recordTaskCompleted(1)
+                } else {
+                    recordTaskCompleted(-1)
+                }
                 return { ...t, done: !t.done }
             }
             return t
         }))
     }
-
     const postponeTask = (id: number) => {
         setTasks(tasks.map(t => t.id === id ? { ...t, postponeCount: t.postponeCount + 1 } : t))
     }
-
     const addTask = () => {
         if (!newTaskInput.trim()) return
         setTasks([...tasks, { id: Date.now(), name: newTaskInput.trim(), meta: 'TODAY', priority: 'med', done: false, postponeCount: 0, category: 'PERSONAL' }])
         setNewTaskInput('')
         setShowAddTask(false)
     }
-
     const getProcrastSuggestion = async (task: Task) => {
         setLoadingProcrast(true)
         try {
@@ -266,7 +243,6 @@ export default function DashboardPage() {
         }
         setLoadingProcrast(false)
     }
-
     // ── MOOD CHECK-IN ────────────────────────────────────────
     const submitMoodCheckIn = async () => {
         if (!selectedMood || !selectedEnergy) return
@@ -279,7 +255,7 @@ export default function DashboardPage() {
         setMoodState(newMood)
         localStorage.setItem('rf_mood', JSON.stringify(newMood))
         gainXP(XP_REWARDS.moodCheckIn, `Mood check-in: +${XP_REWARDS.moodCheckIn} XP`)
-
+        markActiveToday()
         setLoadingMoodAdvice(true)
         try {
             const advice = await callAI(
@@ -302,7 +278,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
         setLoadingMoodAdvice(false)
         setShowMoodCheckIn(false)
     }
-
     // Voice mood detection
     const startMoodListening = () => {
         const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
@@ -328,30 +303,24 @@ If great/good: encourage ambitious work. Be warm and direct.`
         moodRecognitionRef.current = r
         setMoodListening(true)
     }
-
     const focusSessions = JSON.parse(localStorage.getItem('robofocus_sessions') || '[]')
     const successSessions = focusSessions.filter((s: any) => s.status === 'SUCCESS').length
-
     const card = {
         background: 'rgba(4, 2, 16, 0.82)',
         border: '1px solid rgba(100, 50, 200, 0.2)',
         backdropFilter: 'blur(20px)',
     }
-
     const stats = [
         { label: 'PENDING', value: pendingTasks.length, color: '#c084fc' },
         { label: 'COMPLETED', value: tasks.filter(t => t.done).length, color: '#00cc60' },
         { label: 'FOCUS ✓', value: successSessions, color: '#00c8ff' },
         { label: 'STREAK', value: streak, color: '#ff3cac' },
     ]
-
     const displayTasks = showOverwhelmMode ? top3Tasks : tasks.filter(t => !t.done).slice(0, 6)
-
     return (
         <div className="min-h-screen relative overflow-hidden" style={{ background: '#06020f' }}>
             <ProceduralGround />
             <div className="fixed inset-0 pointer-events-none" style={{ background: 'rgba(4,1,12,0.65)', zIndex: 1 }} />
-
             {/* XP POP */}
             <AnimatePresence>
                 {showXpPop && (
@@ -365,7 +334,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
                     </motion.div>
                 )}
             </AnimatePresence>
-
             {/* MOOD CHECK-IN MODAL */}
             <AnimatePresence>
                 {showMoodCheckIn && (
@@ -390,12 +358,10 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(160,130,220,0.4)' }}>
                                 <X className="w-5 h-5" />
                             </button>
-
                             <div className="font-orbitron text-base font-black text-white mb-1">MOOD CHECK-IN</div>
                             <p className="font-mono text-xs mb-6" style={{ color: 'rgba(160,130,220,0.5)' }}>
                                 Tell ROBOFOCUS how you feel — it adjusts your session plan
                             </p>
-
                             {/* Mood selection */}
                             <div className="mb-5">
                                 <label className="font-mono text-xs tracking-widest block mb-3"
@@ -417,7 +383,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                     ))}
                                 </div>
                             </div>
-
                             {/* Energy selection */}
                             <div className="mb-5">
                                 <label className="font-mono text-xs tracking-widest block mb-3"
@@ -438,7 +403,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                     ))}
                                 </div>
                             </div>
-
                             {/* Voice / text note */}
                             <div className="mb-6">
                                 <label className="font-mono text-xs tracking-widest block mb-2"
@@ -470,7 +434,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                     </p>
                                 )}
                             </div>
-
                             <button
                                 onClick={submitMoodCheckIn}
                                 disabled={!selectedMood || !selectedEnergy}
@@ -489,12 +452,9 @@ If great/good: encourage ambitious work. Be warm and direct.`
                     </motion.div>
                 )}
             </AnimatePresence>
-
             <div className="relative flex min-h-screen" style={{ zIndex: 2 }}>
                 <Sidebar />
-
                 <div className="flex-1 flex flex-col min-h-screen overflow-y-auto">
-
                     {/* TOPBAR */}
                     <div className="px-8 py-5 flex items-center justify-between sticky top-0"
                         style={{ borderBottom: '1px solid rgba(80,30,160,0.15)', background: 'rgba(4,1,12,0.85)', backdropFilter: 'blur(20px)', zIndex: 10 }}>
@@ -525,7 +485,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                     )}
                                 </button>
                             )}
-
                             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
                                 style={{ background: 'rgba(80,30,160,0.15)', border: '1px solid rgba(120,60,220,0.25)' }}>
                                 <Trophy className="w-3.5 h-3.5" style={{ color: currentLevel.color }} />
@@ -534,13 +493,11 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                 </span>
                                 <span className="font-mono" style={{ color: 'rgba(160,120,255,0.4)', fontSize: '9px' }}>{xp} XP</span>
                             </div>
-
                             <button className="relative p-2 rounded-lg transition-all"
                                 style={{ background: 'rgba(60,20,120,0.15)', border: '1px solid rgba(100,50,200,0.2)', color: 'rgba(140,100,220,0.5)' }}>
                                 <Bell className="w-4 h-4" />
                                 {procrastTasks.length > 0 && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-pink-500" />}
                             </button>
-
                             <button onClick={() => setListening(!listening)}
                                 className="p-2 rounded-lg transition-all duration-300"
                                 style={{
@@ -552,9 +509,7 @@ If great/good: encourage ambitious work. Be warm and direct.`
                             </button>
                         </div>
                     </div>
-
                     <div className="px-8 py-6 space-y-5 pb-24">
-
                         {/* ── MOOD CHECK-IN PROMPT (if not checked in today) ── */}
                         {!moodState.mood && (
                             <motion.div
@@ -584,7 +539,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                 </div>
                             </motion.div>
                         )}
-
                         {/* ── MOOD ADVICE CARD (after check-in) ── */}
                         <AnimatePresence>
                             {moodState.mood && moodAdvice && (
@@ -644,7 +598,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                 </motion.div>
                             )}
                         </AnimatePresence>
-
                         {/* ── OVERWHELM DETECTOR ── */}
                         <AnimatePresence>
                             {showOverwhelmAlert && (
@@ -690,7 +643,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                 </motion.div>
                             )}
                         </AnimatePresence>
-
                         {/* ── PROCRASTINATION DETECTOR ── */}
                         <AnimatePresence>
                             {showProcrastBanner && procrastTasks.length > 0 && (
@@ -762,7 +714,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                 </motion.div>
                             )}
                         </AnimatePresence>
-
                         {/* ── AI BRIEFING ── */}
                         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
                             className="rounded-2xl p-5"
@@ -780,7 +731,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                 </p>
                             </div>
                         </motion.div>
-
                         {/* ── STATS ── */}
                         <div className="grid grid-cols-4 gap-4">
                             {stats.map((s, i) => (
@@ -793,10 +743,8 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                 </motion.div>
                             ))}
                         </div>
-
                         {/* ── MAIN GRID ── */}
                         <div className="grid grid-cols-3 gap-5">
-
                             {/* TASKS */}
                             <div className="col-span-2 space-y-3">
                                 <div className="flex items-center justify-between">
@@ -823,7 +771,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                         ADD TASK
                                     </button>
                                 </div>
-
                                 <AnimatePresence>
                                     {showAddTask && (
                                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
@@ -850,7 +797,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
-
                                 <div className="rounded-2xl overflow-hidden" style={card}>
                                     <div className="divide-y" style={{ borderColor: 'rgba(60,20,120,0.15)' }}>
                                         {displayTasks.length === 0 ? (
@@ -910,10 +856,8 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                     </div>
                                 </div>
                             </div>
-
                             {/* RIGHT COLUMN */}
                             <div className="space-y-4">
-
                                 {/* XP CARD */}
                                 <div className="rounded-2xl p-5" style={{ ...card, borderTop: `2px solid ${currentLevel.color}40` }}>
                                     <div className="font-orbitron tracking-widest mb-3"
@@ -964,7 +908,8 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                         ))}
                                     </div>
                                 </div>
-
+                                {/* DAILY QUESTS + STREAK */}
+                                <QuestsCard onXp={gainXP} />
                                 {/* MOOD-ADJUSTED FOCUS CTA */}
                                 <div className="rounded-2xl p-5" style={card}>
                                     <span className="font-orbitron tracking-widest block mb-1"
@@ -992,7 +937,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                         START → +{XP_REWARDS.focusSession} XP
                                     </button>
                                 </div>
-
                                 {/* NUDGE */}
                                 <div className="rounded-2xl p-5" style={{ ...card, borderLeft: '2px solid rgba(255,60,172,0.4)' }}>
                                     <div className="flex items-center gap-2 mb-2">
@@ -1025,7 +969,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
                                         </button>
                                     </div>
                                 </div>
-
                                 {/* Quick nav */}
                                 <div className="grid grid-cols-2 gap-2">
                                     {[
@@ -1048,7 +991,6 @@ If great/good: encourage ambitious work. Be warm and direct.`
                         </div>
                     </div>
                 </div>
-
                 {/* FLOATING MIC */}
                 <button onClick={() => setListening(!listening)}
                     className="fixed bottom-8 right-8 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300"
