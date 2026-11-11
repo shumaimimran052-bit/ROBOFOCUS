@@ -13,10 +13,12 @@ import SettingsPage from './pages/SettingsPage'
 import MissionPlannerPage from './pages/MissionPlannerPage'
 import BodyDoublingPage from './pages/BodyDoublingPage'
 import NudgeBanner from './components/ui/NudgeBanner'
+import WhatsNewModal from './components/ui/WhatsNewModal'
 function App() {
     return (
         <Router>
             <NudgeBanner />
+            <WhatsNewModal />
             <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<LoginPage />} />

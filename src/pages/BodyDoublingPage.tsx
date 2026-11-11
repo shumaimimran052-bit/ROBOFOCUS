@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { Volume2, VolumeX } from 'lucide-react'
 import Sidebar from '../components/ui/Sidebar'
+import TopoField from '../components/ui/TopoField'
 import {
     askAI, readTasks, addXpToStorage, markActiveToday,
     completeTaskInStorage, sendBrowserNotification,
@@ -50,10 +51,38 @@ const fmtClock = (sec: number): string => {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 }
 
+// dark card with a soft purple gradient border
 const glass = {
-    background: 'rgba(255,255,255,0.04)',
-    backdropFilter: 'blur(24px)',
-    border: '1px solid rgba(255,255,255,0.1)',
+    background: 'linear-gradient(#07020f, #07020f) padding-box, linear-gradient(135deg, rgba(192,132,252,0.45), rgba(168,85,247,0.06) 50%, rgba(192,132,252,0.28)) border-box',
+    border: '1px solid transparent',
+}
+
+// words slide up out of a mask, one after another
+function RevealWords({ text, delay = 0, gradient = false }: { text: string; delay?: number; gradient?: boolean }) {
+    return (
+        <>
+            {text.split(' ').map((word, i) => (
+                <span key={i} style={{ overflow: 'hidden', display: 'inline-block', verticalAlign: 'bottom', paddingBottom: '0.12em', marginRight: '0.28em' }}>
+                    <motion.span
+                        style={{
+                            display: 'inline-block',
+                            ...(gradient ? {
+                                background: 'linear-gradient(90deg, #f5f3ff, #a855f7)',
+                                WebkitBackgroundClip: 'text',
+                                backgroundClip: 'text',
+                                color: 'transparent',
+                            } : {}),
+                        }}
+                        initial={{ y: '120%', opacity: 0 }}
+                        animate={{ y: '0%', opacity: 1 }}
+                        transition={{ duration: 0.9, delay: delay + i * 0.07, ease: 'easeOut' }}
+                    >
+                        {word}
+                    </motion.span>
+                </span>
+            ))}
+        </>
+    )
 }
 
 export default function BodyDoublingPage() {
@@ -263,15 +292,12 @@ export default function BodyDoublingPage() {
     })
 
     return (
-        <div
-            className="min-h-screen relative"
-            style={{ background: 'radial-gradient(125% 125% at 50% 10%, #000 40%, #6600ee 100%)' }}
-        >
+        <div className="min-h-screen relative" style={{ background: '#050008' }}>
+            {/* animated purple topographic background */}
             <div className="fixed inset-0 pointer-events-none z-0">
-                <div style={{
-                    position: 'absolute', top: '-10%', left: '30%', width: '600px', height: '500px',
-                    background: 'radial-gradient(ellipse, rgba(100,30,220,0.12) 0%, transparent 70%)', filter: 'blur(100px)',
-                }} />
+                <TopoField className="absolute inset-0" />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(5,0,8,0.5), transparent, #050008)' }} />
+                <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at center, transparent 0%, #050008 100%)', opacity: 0.85 }} />
             </div>
             <div className="relative z-10 flex min-h-screen">
                 <Sidebar />
@@ -302,6 +328,27 @@ export default function BodyDoublingPage() {
                     {/* SETUP */}
                     {phase === 'setup' && (
                         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="py-10 space-y-6">
+                            {/* hero */}
+                            <div className="flex flex-col items-center text-center pt-4 pb-2">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-6"
+                                    style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.3)', backdropFilter: 'blur(12px)' }}>
+                                    <span className="flex h-2 w-2 relative">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: '#c084fc' }} />
+                                        <span className="relative inline-flex rounded-full h-2 w-2" style={{ background: '#c084fc' }} />
+                                    </span>
+                                    <span className="font-mono tracking-widest" style={{ color: 'rgba(216,180,254,0.8)', fontSize: '10px' }}>
+                                        ROBOFOCUS 2.0 · BODY DOUBLE
+                                    </span>
+                                </div>
+                                <h2 className="font-orbitron text-3xl md:text-4xl tracking-tight text-white leading-tight">
+                                    <RevealWords text="You focus." />
+                                    <br />
+                                    <RevealWords text="I'll keep you company." delay={0.25} gradient />
+                                </h2>
+                                <p className="font-mono mt-5 max-w-md leading-relaxed" style={{ color: 'rgba(200,185,255,0.55)', fontSize: '13px' }}>
+                                    Tell me what you're working on. I'll stay quiet, check in now and then, and help when you get stuck.
+                                </p>
+                            </div>
                             <div className="rounded-2xl p-6" style={glass}>
                                 <label className="font-orbitron tracking-widest block mb-3" style={{ color: 'rgba(160,110,240,0.6)', fontSize: '9px' }}>
                                     WHAT ARE YOU WORKING ON?
@@ -359,12 +406,13 @@ export default function BodyDoublingPage() {
                             <button
                                 onClick={startSession}
                                 disabled={!taskText.trim()}
-                                className="w-full py-4 font-orbitron text-sm tracking-widest rounded-xl transition-all duration-300"
+                                className="w-full py-4 font-orbitron text-sm tracking-widest rounded-full transition-all duration-300"
                                 style={{
-                                    background: taskText.trim() ? 'rgba(100,40,200,0.25)' : 'rgba(60,20,120,0.08)',
-                                    border: '1px solid rgba(140,70,240,0.45)',
-                                    color: taskText.trim() ? '#c084fc' : 'rgba(160,120,255,0.25)',
+                                    background: taskText.trim() ? '#f3e8ff' : 'rgba(255,255,255,0.06)',
+                                    border: '1px solid transparent',
+                                    color: taskText.trim() ? '#2e1065' : 'rgba(200,170,255,0.3)',
                                     cursor: taskText.trim() ? 'pointer' : 'not-allowed',
+                                    boxShadow: taskText.trim() ? '0 0 30px rgba(168,85,247,0.35)' : 'none',
                                 }}
                             >
                                 START WORKING TOGETHER

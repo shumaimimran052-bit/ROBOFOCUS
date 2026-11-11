@@ -41,12 +41,20 @@ const Sidebar = () => {
                         <span className="font-orbitron text-xs font-black" style={{ color: '#a855f7' }}>RF</span>
                     </div>
                     {expanded && (
-                        <span
-                            className="font-orbitron text-xs font-black tracking-widest whitespace-nowrap overflow-hidden"
-                            style={{ color: '#a855f7' }}
-                        >
-                            ROBOFOCUS
-                        </span>
+                        <>
+                            <span
+                                className="font-orbitron text-xs font-black tracking-widest whitespace-nowrap overflow-hidden"
+                                style={{ color: '#a855f7' }}
+                            >
+                                ROBOFOCUS
+                            </span>
+                            <span
+                                className="font-orbitron flex-shrink-0 rounded-full"
+                                style={{ fontSize: '8px', padding: '2px 6px', color: '#c084fc', border: '1px solid rgba(168,85,247,0.45)', background: 'rgba(168,85,247,0.12)' }}
+                            >
+                                2.0
+                            </span>
+                        </>
                     )}
                 </div>
                 <nav className="flex-1 py-3 flex flex-col gap-0.5 overflow-hidden">
