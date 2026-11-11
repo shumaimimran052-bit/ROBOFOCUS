@@ -11,10 +11,14 @@ import MemoryPage from './pages/MemoryPage'
 import InsightsPage from './pages/InsightsPage'
 import SettingsPage from './pages/SettingsPage'
 import MissionPlannerPage from './pages/MissionPlannerPage'
-
+import BodyDoublingPage from './pages/BodyDoublingPage'
+import NudgeBanner from './components/ui/NudgeBanner'
+import WhatsNewModal from './components/ui/WhatsNewModal'
 function App() {
     return (
         <Router>
+            <NudgeBanner />
+            <WhatsNewModal />
             <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<LoginPage />} />
@@ -29,9 +33,9 @@ function App() {
                 <Route path="/insights" element={<InsightsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/mission" element={<MissionPlannerPage />} />
+                <Route path="/bodydouble" element={<BodyDoublingPage />} />
             </Routes>
         </Router>
     )
 }
-
 export default App

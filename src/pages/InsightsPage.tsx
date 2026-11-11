@@ -3,10 +3,9 @@ import { motion } from 'framer-motion'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import GridGlowBackground from '../components/ui/GridGlowBackground'
 import Sidebar from '../components/ui/Sidebar'
-import { Brain, Clock, Target, TrendingUp, Trophy, AlertTriangle, Zap, Calendar } from 'lucide-react'
-
+import { Brain, Clock, Target, TrendingUp, Trophy, AlertTriangle, Zap, Calendar, Sparkles } from 'lucide-react'
+import WeeklyReview from '../components/ui/WeeklyReview'
 const OPENROUTER_KEY = import.meta.env.VITE_OPENROUTER_KEY
-
 interface FocusSession {
     id: string
     mission: string
@@ -16,7 +15,6 @@ interface FocusSession {
     distractionCount: number
     completionPhoto?: string
 }
-
 interface Task {
     id: number
     name: string
@@ -24,14 +22,12 @@ interface Task {
     category: string
     postponeCount: number
 }
-
 const categoryColors: Record<string, string> = {
     SCHOOL: '#00c8ff',
     PERSONAL: '#a855f7',
     WORK: '#ff3cac',
     HEALTH: '#00ff9d',
 }
-
 const callAI = async (prompt: string): Promise<string> => {
     if (!OPENROUTER_KEY) throw new Error('No key')
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -53,19 +49,16 @@ const callAI = async (prompt: string): Promise<string> => {
     const data = await res.json()
     return data.choices?.[0]?.message?.content?.trim() || ''
 }
-
 export default function InsightsPage() {
     const [timeRange, setTimeRange] = useState<'THIS WEEK' | 'THIS MONTH' | 'ALL TIME'>('THIS WEEK')
     const [aiSummary, setAiSummary] = useState('')
     const [loadingAI, setLoadingAI] = useState(false)
-    const [activeTab, setActiveTab] = useState<'overview' | 'timeline'>('overview')
-
+    const [activeTab, setActiveTab] = useState<'overview' | 'timeline' | 'review'>('overview')
     // Load real data
     const sessions: FocusSession[] = JSON.parse(localStorage.getItem('robofocus_sessions') || '[]')
     const tasks: Task[] = JSON.parse(localStorage.getItem('rf_tasks') || '[]')
     const xp: number = parseInt(localStorage.getItem('rf_xp') || '0')
     const mood = JSON.parse(localStorage.getItem('rf_mood') || 'null')
-
     // Filter sessions by time range
     const getFilteredSessions = () => {
         const now = new Date()
@@ -82,7 +75,6 @@ export default function InsightsPage() {
             return true
         })
     }
-
     const filteredSessions = getFilteredSessions()
     const successSessions = filteredSessions.filter(s => s.status === 'SUCCESS')
     const totalFocusMinutes = filteredSessions.reduce((acc, s) => acc + Math.floor(s.duration / 60), 0)
@@ -96,7 +88,6 @@ export default function InsightsPage() {
     const avgDistractions = filteredSessions.length > 0
         ? (totalDistractions / filteredSessions.length).toFixed(1)
         : '0'
-
     // Build focus hours by day chart
     const buildFocusChart = () => {
         const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
@@ -110,7 +101,6 @@ export default function InsightsPage() {
             return { day, hours: parseFloat(hours.toFixed(2)), sessions: daySessions.length }
         })
     }
-
     // Build category breakdown from tasks
     const buildCategoryData = () => {
         const cats: Record<string, number> = {}
@@ -122,7 +112,6 @@ export default function InsightsPage() {
             name, value, color: categoryColors[name] || '#a855f7'
         }))
     }
-
     // Build heatmap — last 7 days x 12 hours
     const buildHeatmap = () => {
         const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
@@ -141,7 +130,6 @@ export default function InsightsPage() {
             })
         })
     }
-
     // Build timeline data for Time Blindness
     const buildTimeline = () => {
         const today = new Date().toDateString()
@@ -162,7 +150,6 @@ export default function InsightsPage() {
         })
         return hours
     }
-
     const focusChartData = buildFocusChart()
     const categoryData = buildCategoryData()
     const heatmapData = buildHeatmap()
@@ -171,7 +158,6 @@ export default function InsightsPage() {
     const timelineData = buildTimeline()
     const totalFocusToday = timelineData.reduce((a, h) => a + h.focusMinutes, 0)
     const gapHours = timelineData.filter(h => h.isPast && h.focusMinutes === 0).length
-
     // AI analysis
     useEffect(() => {
         const generateSummary = async () => {
@@ -200,13 +186,11 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
         }
         generateSummary()
     }, [timeRange])
-
     const cardStyle = {
         background: 'rgba(10, 5, 20, 0.78)',
         border: '1px solid rgba(168, 85, 247, 0.15)',
         backdropFilter: 'blur(16px)',
     }
-
     const tooltipStyle = {
         backgroundColor: 'rgba(10,5,20,0.95)',
         border: '1px solid rgba(168,85,247,0.3)',
@@ -215,13 +199,11 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
         fontFamily: 'Space Mono, monospace',
         fontSize: '11px',
     }
-
     const tabStyle = (active: boolean) => ({
         background: active ? 'rgba(168,85,247,0.2)' : 'rgba(255,255,255,0.04)',
         border: active ? '1px solid rgba(168,85,247,0.5)' : '1px solid rgba(255,255,255,0.08)',
         color: active ? '#c084fc' : 'rgba(255,255,255,0.3)',
     })
-
     const stats = [
         { label: 'FOCUS HOURS', value: totalFocusHours, icon: Clock, color: '#c084fc' },
         { label: 'SESSIONS', value: filteredSessions.length, icon: Target, color: '#00c8ff' },
@@ -230,12 +212,10 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
         { label: 'TASKS DONE', value: completedTasks, icon: TrendingUp, color: '#00cc60' },
         { label: 'XP EARNED', value: xp, icon: Zap, color: '#f59e0b' },
     ]
-
     return (
         <GridGlowBackground>
             <Sidebar />
             <div className="pl-14 min-h-screen w-full">
-
                 {/* TOPBAR */}
                 <div className="px-8 py-5 border-b border-purple-500/10 flex items-center justify-between flex-wrap gap-4">
                     <div>
@@ -265,12 +245,16 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                                 <Calendar className="w-3.5 h-3.5" />
                                 TIME MAP
                             </button>
+                            <button onClick={() => setActiveTab('review')}
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg font-mono text-xs tracking-widest transition-all duration-200"
+                                style={tabStyle(activeTab === 'review')}>
+                                <Sparkles className="w-3.5 h-3.5" />
+                                WEEKLY REVIEW
+                            </button>
                         </div>
                     </div>
                 </div>
-
                 <div className="px-8 py-6 space-y-6">
-
                     {/* AI SUMMARY */}
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                         className="rounded-xl p-5" style={{ ...cardStyle, borderLeft: '3px solid #a855f7' }}>
@@ -293,7 +277,6 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                             )}
                         </div>
                     </motion.div>
-
                     {/* STATS GRID */}
                     <div className="grid grid-cols-6 gap-3">
                         {stats.map((s, i) => (
@@ -306,7 +289,6 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                             </motion.div>
                         ))}
                     </div>
-
                     {activeTab === 'overview' && (
                         <>
                             {/* CHARTS ROW */}
@@ -342,7 +324,6 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                                         </div>
                                     )}
                                 </div>
-
                                 <div className="rounded-xl p-5" style={cardStyle}>
                                     <div className="font-orbitron text-xs tracking-widest text-white/40 mb-4">TASK CATEGORIES</div>
                                     {categoryData.length > 0 ? (
@@ -376,7 +357,6 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                                     )}
                                 </div>
                             </div>
-
                             {/* SESSION LIST */}
                             {filteredSessions.length > 0 && (
                                 <div className="rounded-xl p-5" style={cardStyle}>
@@ -416,7 +396,6 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                                     </div>
                                 </div>
                             )}
-
                             {/* HEATMAP */}
                             <div className="rounded-xl p-5" style={cardStyle}>
                                 <div className="font-orbitron text-xs tracking-widest text-white/40 mb-4">
@@ -463,11 +442,9 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                             </div>
                         </>
                     )}
-
                     {activeTab === 'timeline' && (
                         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
                             className="space-y-5">
-
                             {/* TIME BLINDNESS HEADER */}
                             <div className="rounded-xl p-5" style={{ ...cardStyle, borderLeft: '3px solid rgba(168,85,247,0.5)' }}>
                                 <div className="flex items-start gap-4">
@@ -500,7 +477,6 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                                     </div>
                                 )}
                             </div>
-
                             {/* TIMELINE VISUALIZATION */}
                             <div className="rounded-xl p-6" style={cardStyle}>
                                 <div className="font-orbitron text-xs tracking-widest text-white/40 mb-6">TODAY'S TIME MAP</div>
@@ -509,7 +485,6 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                                         const hasFocus = block.focusMinutes > 0
                                         const barWidth = hasFocus ? Math.min((block.focusMinutes / 60) * 100, 100) : 0
                                         const isNow = block.isCurrent
-
                                         return (
                                             <motion.div key={block.hour}
                                                 initial={{ opacity: 0, x: -10 }}
@@ -527,7 +502,6 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                                                         {block.label}
                                                     </span>
                                                 </div>
-
                                                 {/* Bar track */}
                                                 <div className="flex-1 h-8 rounded-xl relative overflow-hidden"
                                                     style={{
@@ -539,7 +513,6 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                                                             hasFocus ? '1px solid rgba(168,85,247,0.2)' :
                                                                 '1px solid rgba(255,255,255,0.04)',
                                                     }}>
-
                                                     {/* Focus bar */}
                                                     {hasFocus && (
                                                         <motion.div
@@ -555,7 +528,6 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                                                             }}
                                                         />
                                                     )}
-
                                                     {/* Now indicator */}
                                                     {isNow && (
                                                         <div className="absolute inset-0 flex items-center justify-center">
@@ -568,7 +540,6 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                                                             </motion.div>
                                                         </div>
                                                     )}
-
                                                     {/* Session details inside bar */}
                                                     {hasFocus && (
                                                         <div className="absolute inset-0 flex items-center px-3">
@@ -578,7 +549,6 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                                                             </span>
                                                         </div>
                                                     )}
-
                                                     {/* Gap indicator */}
                                                     {block.isPast && !hasFocus && !isNow && (
                                                         <div className="absolute inset-0 flex items-center px-3">
@@ -588,7 +558,6 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                                                         </div>
                                                     )}
                                                 </div>
-
                                                 {/* Session status dots */}
                                                 <div className="w-16 flex items-center gap-1 flex-shrink-0">
                                                     {block.sessions.map(s => (
@@ -601,7 +570,6 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                                         )
                                     })}
                                 </div>
-
                                 {/* Legend */}
                                 <div className="flex items-center gap-6 mt-6 pt-4" style={{ borderTop: '1px solid rgba(168,85,247,0.08)' }}>
                                     {[
@@ -617,7 +585,6 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                                     ))}
                                 </div>
                             </div>
-
                             {/* PRODUCTIVITY SCORE */}
                             <div className="grid grid-cols-3 gap-4">
                                 {[
@@ -656,7 +623,7 @@ In 2-3 sentences, give specific actionable insights. Mention their best pattern 
                             </div>
                         </motion.div>
                     )}
-
+                    {activeTab === 'review' && <WeeklyReview />}
                 </div>
             </div>
         </GridGlowBackground>
