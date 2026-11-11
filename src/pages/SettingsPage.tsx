@@ -1,34 +1,48 @@
 // pages/SettingsPage.tsx
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { User, Bell, Brain, Timer, Shield, LogOut } from 'lucide-react'
 import { ShaderBackground } from '../components/ui/hero-shader'
 import Sidebar from '../components/ui/Sidebar'
-
+import { loadSettings, saveSettings } from '../lib/robofocus'
 export default function SettingsPage() {
     const navigate = useNavigate()
     const [saved, setSaved] = useState('')
     const [profile, setProfile] = useState({ name: 'Alex', email: 'alex@example.com', age: '20' })
-    const [toggles, setToggles] = useState({
-        nudges: true, briefing: true, voice: true,
-        taskReminders: true, deadlineWarnings: true,
-        streakAlerts: false, breakReminder: true, autoStart: false,
-    })
+    const [toggles, setToggles] = useState(() => loadSettings().toggles)
+    const [notifNote, setNotifNote] = useState('')
     const [personality, setPersonality] = useState('Motivating')
     const [defaultDuration, setDefaultDuration] = useState('25 MIN')
-    const [wakeTime, setWakeTime] = useState('07:00')
-    const [sleepTime, setSleepTime] = useState('23:00')
-    const [dndTime, setDndTime] = useState('23:00')
-
+    const [wakeTime, setWakeTime] = useState(() => loadSettings().wakeTime)
+    const [sleepTime, setSleepTime] = useState(() => loadSettings().sleepTime)
+    const [dndTime, setDndTime] = useState(() => loadSettings().dndTime)
+    // ROBOFOCUS 2.0: settings are now remembered so nudges can respect them
+    useEffect(() => {
+        saveSettings({ toggles, wakeTime, sleepTime, dndTime })
+    }, [toggles, wakeTime, sleepTime, dndTime])
+    const handleToggle = async (id: keyof typeof toggles) => {
+        if (id === 'browserNotifications' && !toggles.browserNotifications) {
+            if (typeof Notification === 'undefined') {
+                setNotifNote('This browser does not support notifications.')
+                return
+            }
+            const result = await Notification.requestPermission()
+            if (result !== 'granted') {
+                setNotifNote('Notifications are blocked. Allow them in your browser site settings.')
+                return
+            }
+            setNotifNote('')
+        }
+        setToggles(prev => ({ ...prev, [id]: !prev[id] }))
+    }
     const saveSection = (id: string) => {
         setSaved(id)
         setTimeout(() => setSaved(''), 2000)
     }
-
     const Toggle = ({ id }: { id: keyof typeof toggles }) => (
         <button
-            onClick={() => setToggles({ ...toggles, [id]: !toggles[id] })}
+            onClick={() => handleToggle(id)}
             className="relative w-10 h-5 rounded-full transition-all duration-300 flex-shrink-0"
             style={{
                 background: toggles[id] ? 'rgba(120, 50, 220, 0.5)' : 'rgba(255,255,255,0.08)',
@@ -42,7 +56,6 @@ export default function SettingsPage() {
             />
         </button>
     )
-
     // Cards get a stronger glass effect to stand out over the shader
     const card = {
         background: 'rgba(4, 2, 16, 0.65)',
@@ -53,7 +66,6 @@ export default function SettingsPage() {
         overflow: 'hidden' as const,
         boxShadow: '0 4px 32px rgba(0,0,0,0.4)',
     }
-
     const inputStyle = {
         background: 'rgba(30, 10, 70, 0.35)',
         border: '1px solid rgba(80, 40, 160, 0.3)',
@@ -66,7 +78,6 @@ export default function SettingsPage() {
         outline: 'none',
         transition: 'border-color 0.2s',
     }
-
     const Section = ({ icon: Icon, title, id, children }: any) => (
         <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -92,7 +103,6 @@ export default function SettingsPage() {
             <div className="px-6 py-5 space-y-4">{children}</div>
         </motion.div>
     )
-
     const ToggleRow = ({ id, label, desc }: { id: keyof typeof toggles; label: string; desc?: string }) => (
         <div className="flex items-center justify-between gap-4">
             <div>
@@ -107,7 +117,6 @@ export default function SettingsPage() {
             <Toggle id={id} />
         </div>
     )
-
     const SaveBtn = ({ id }: { id: string }) => (
         <button
             onClick={() => saveSection(id)}
@@ -129,12 +138,10 @@ export default function SettingsPage() {
             SAVE CHANGES
         </button>
     )
-
     return (
         <ShaderBackground>
             <div className="flex min-h-screen relative z-10">
                 <Sidebar />
-
                 <div className="flex-1 flex flex-col">
                     {/* Header */}
                     <div
@@ -153,10 +160,8 @@ export default function SettingsPage() {
                             Configure your assistant
                         </p>
                     </div>
-
                     {/* Scrollable content */}
                     <div className="px-8 py-6 max-w-2xl space-y-4 overflow-y-auto">
-
                         <Section icon={User} title="PROFILE" id="profile">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -196,7 +201,6 @@ export default function SettingsPage() {
                             </div>
                             <SaveBtn id="profile" />
                         </Section>
-
                         <Section icon={Brain} title="AI PREFERENCES" id="ai">
                             <ToggleRow id="nudges" label="Proactive nudges" desc="ROBOFOCUS messages you when tasks are overdue" />
                             <ToggleRow id="briefing" label="Morning briefing" desc="AI generates daily summary at wake-up time" />
@@ -224,7 +228,6 @@ export default function SettingsPage() {
                                 </div>
                             </div>
                         </Section>
-
                         <Section icon={Timer} title="FOCUS DEFAULTS" id="focus">
                             <div>
                                 <label className="font-mono tracking-widest block mb-2"
@@ -251,11 +254,14 @@ export default function SettingsPage() {
                             <ToggleRow id="breakReminder" label="Break reminders" desc="Get notified to take breaks between sessions" />
                             <ToggleRow id="autoStart" label="Auto-start next session" desc="Automatically begin next focus session" />
                         </Section>
-
                         <Section icon={Bell} title="NOTIFICATIONS" id="notifications">
                             <ToggleRow id="taskReminders" label="Task reminders" />
                             <ToggleRow id="deadlineWarnings" label="Deadline warnings" />
                             <ToggleRow id="streakAlerts" label="Streak alerts" />
+                            <ToggleRow id="browserNotifications" label="Browser notifications" desc="Pop-up reminders when this tab is in the background" />
+                            {notifNote && (
+                                <div className="font-mono" style={{ color: 'rgba(255,140,0,0.7)', fontSize: '10px' }}>{notifNote}</div>
+                            )}
                             <div>
                                 <label className="font-mono tracking-widest block mb-2"
                                     style={{ color: 'rgba(130, 90, 200, 0.5)', fontSize: '9px' }}>
@@ -271,7 +277,6 @@ export default function SettingsPage() {
                                 />
                             </div>
                         </Section>
-
                         <Section icon={Timer} title="YOUR SCHEDULE" id="schedule">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
@@ -305,7 +310,6 @@ export default function SettingsPage() {
                             </div>
                             <SaveBtn id="schedule" />
                         </Section>
-
                         <Section icon={Shield} title="ACCOUNT & SECURITY" id="account">
                             <button
                                 className="w-full py-3 font-mono text-xs tracking-widest rounded-xl transition-all"
@@ -342,7 +346,6 @@ export default function SettingsPage() {
                                 DELETE ACCOUNT
                             </button>
                         </Section>
-
                         <div style={{ height: '40px' }} />
                     </div>
                 </div>
